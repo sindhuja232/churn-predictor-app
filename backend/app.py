@@ -6,7 +6,8 @@ import os
 app = Flask(__name__, static_folder="build", static_url_path="/")
 CORS(app)
 
-model = pickle.load(open("churn_model.pkl", "rb"))
+model_path = os.path.join(os.path.dirname(__file__), "churn_model.pkl")
+model = pickle.load(open(model_path, "rb"))
 
 @app.route('/')
 def serve():
@@ -46,5 +47,6 @@ def predict():
 def not_found(e):
     return send_from_directory(app.static_folder, 'index.html')
 
-port = int(os.environ.get("PORT", 5000))
-app.run(host="0.0.0.0", port=port)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
