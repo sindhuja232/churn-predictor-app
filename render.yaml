@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: churn-predictor-app
+    env: python
+    buildCommand: ""
+    startCommand: python app.py
+    envVars:
+      - key: PORT
+        value: 10000
+    plan: free
+    region: oregon
+    buildFilter:
+      paths: 
+        - backend/**
+    autoDeploy: true
+    rootDir: backend
