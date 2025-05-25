@@ -18,29 +18,30 @@ def predict():
     try:
         data = request.get_json()
         features = [
-            data['gender'],
-            data['SeniorCitizen'],
-            data['Partner'],
-            data['Dependents'],
-            data['tenure'],
-            data['PhoneService'],
-            data['MultipleLines'],
-            data['InternetService'],
-            data['OnlineSecurity'],
-            data['OnlineBackup'],
-            data['DeviceProtection'],
-            data['TechSupport'],
-            data['StreamingTV'],
-            data['StreamingMovies'],
-            data['Contract'],
-            data['PaperlessBilling'],
-            data['PaymentMethod'],
+            int(data['gender']),
+            int(data['SeniorCitizen']),
+            int(data['Partner']),
+            int(data['Dependents']),
+            int(data['tenure']),
+            int(data['PhoneService']),
+            int(data['MultipleLines']),
+            int(data['InternetService']),
+            int(data['OnlineSecurity']),
+            int(data['OnlineBackup']),
+            int(data['DeviceProtection']),
+            int(data['TechSupport']),
+            int(data['StreamingTV']),
+            int(data['StreamingMovies']),
+            int(data['Contract']),
+            int(data['PaperlessBilling']),
+            int(data['PaymentMethod']),
             float(data['MonthlyCharges']),
             float(data['TotalCharges'])
         ]
         prediction = model.predict([features])[0]
         return jsonify({'Churn': str(prediction)})
     except Exception as e:
+        print("Prediction Error:", e)
         return jsonify({'error': str(e)})
 
 @app.errorhandler(404)
