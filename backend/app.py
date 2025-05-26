@@ -1,15 +1,14 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
+from xgboost import XGBClassifier
 import os
 import numpy as np
-import xgboost as xgb
 
 app = Flask(__name__, static_folder="build", static_url_path="/")
 CORS(app)
 
-model_path = os.path.join(os.path.dirname(__file__), "churn_model.json")
-model = xgb.XGBClassifier()
-model.load_model(model_path)
+model = XGBClassifier()
+model.load_model(os.path.join(os.path.dirname(__file__), "churn_model.json"))
 
 @app.route('/')
 def serve():
@@ -41,7 +40,7 @@ def predict():
             float(data['TotalCharges'])
         ]
         prediction = model.predict(np.array([features]))[0]
-        return jsonify({'Churn': str(prediction)})
+        return jsonify({'Churn': str(int(prediction))})
     except Exception as e:
         return jsonify({'error': str(e)})
 
