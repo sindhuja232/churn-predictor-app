@@ -1,52 +1,60 @@
-from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
-from xgboost import XGBClassifier
 import os
+import pickle
 import numpy as np
+from flask import Flask, request, jsonify
+import xgboost as xgb
 
-app = Flask(__name__, static_folder="build", static_url_path="/")
-CORS(app)
+app = Flask(__name__)
 
-model = XGBClassifier()
-model.load_model(os.path.join(os.path.dirname(__file__), "churn_model.json"))
+# Load the trained model
+model = xgb.XGBClassifier()
+model.load_model("churn_model.json")
 
-@app.route('/')
-def serve():
-    return send_from_directory(app.static_folder, 'index.html')
+# Load encoders
+with open("encoders.pkl", "rb") as f:
+    encoders = pickle.load(f)
 
-@app.route('/predict', methods=['POST'])
+# Define the expected input features
+input_features = [
+    'gender', 'SeniorCitizen', 'Partner', 'Dependents',
+    'tenure', 'PhoneService', 'MultipleLines', 'InternetService',
+    'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport',
+    'StreamingTV', 'StreamingMovies', 'Contract', 'PaperlessBilling',
+    'PaymentMethod', 'MonthlyCharges', 'TotalCharges'
+]
+
+@app.route("/predict", methods=["POST"])
 def predict():
     try:
         data = request.get_json()
-        features = [
-            data['gender'],
-            data['SeniorCitizen'],
-            data['Partner'],
-            data['Dependents'],
-            data['tenure'],
-            data['PhoneService'],
-            data['MultipleLines'],
-            data['InternetService'],
-            data['OnlineSecurity'],
-            data['OnlineBackup'],
-            data['DeviceProtection'],
-            data['TechSupport'],
-            data['StreamingTV'],
-            data['StreamingMovies'],
-            data['Contract'],
-            data['PaperlessBilling'],
-            data['PaymentMethod'],
-            float(data['MonthlyCharges']),
-            float(data['TotalCharges'])
-        ]
-        prediction = model.predict(np.array([features]))[0]
-        return jsonify({'Churn': str(int(prediction))})
-    except Exception as e:
-        return jsonify({'error': str(e)})
+        print("Received input:", data)
 
-@app.errorhandler(404)
-def not_found(e):
-    return send_from_directory(app.static_folder, 'index.html')
+        features = []
+        for col in input_features:
+            value = data.get(col)
+
+            if col in ['MonthlyCharges', 'TotalCharges']:
+                value = float(value)
+            elif col in ['tenure', 'SeniorCitizen']:
+                value = int(value)
+            elif col in encoders:
+                print(f"Encoding {col}: {value}")
+                value = encoders[col].transform([value])[0]
+
+            features.append(value)
+
+        print("Processed features:", features)
+
+        input_array = np.array(features).reshape(1, -1)
+        prediction = model.predict(input_array)[0]
+
+        print("Prediction result:", prediction)
+        return jsonify({"Churn": str(prediction)})
+
+    except Exception as e:
+        print("Prediction error:", str(e))
+        return jsonify({"error": str(e)})
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
