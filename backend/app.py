@@ -23,7 +23,9 @@ input_features = [
     'PaymentMethod', 'MonthlyCharges', 'TotalCharges'
 ]
 
-@app.route("/predict", methods=["POST"])
+@app.route("/", methods=["GET"])
+def home():
+     return "Churn prediction API is live!"
 def predict():
     try:
         data = request.get_json()
